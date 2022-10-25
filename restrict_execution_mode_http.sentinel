@@ -1,0 +1,42 @@
+### Import functions ###
+import "tfrun"
+import "http"
+import "json"
+import "time"
+
+### Input Parameters ###
+param api_key
+
+
+### Run Time Variables ###
+workspace_name = tfrun.workspace.name
+organization = tfrun.organization.name
+
+
+### Build GET Call ###
+request = http.request("https://app.terraform.io/api/v2/organizations/"+organization+"/workspaces/"+workspace_name)
+request = request.with_header("Authorization", "Bearer "+api_key)
+request = request.with_header("Content-Type", "application/json")
+
+
+print("####################################################")
+print("POLICY RESULTS ARE BELOW")
+print("####################################################\n")
+
+
+#result = http.get(request)
+#print(result)
+resp = json.unmarshal(http.get(request).body)
+print(resp)
+res = resp.data.attributes
+//this is required because having a '-' in a selector name does not work
+execution = res["execution-mode"]
+print("Execution Mode of Workspace set to: ", execution)
+		
+
+print("\n####################################################")
+
+# Restrict Workspace Execution Mode to be 'agent' only (remote or local na) #
+main = rule {
+  execution is "remote"
+}
