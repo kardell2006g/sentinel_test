@@ -1,0 +1,21 @@
+# Policy that restricts the 'location' of resoruces using AzureRM provider
+# See provider docs: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs
+
+### Import functions ###
+import "tfplan-functions" as plan
+
+resources = plan.find_resources_by_provider("azurerm")
+#print(resources)
+
+allowed_locations = ["eastus2","westus1"]
+
+# Function to check if location is in allowed_locations list
+# Warnings will be printed for all violations since the last parameter is true
+violatingAzureAppServices = plan.filter_attribute_is_not_value_ignore_null (resources,
+                            "location",allowed_locations, true)
+
+
+# Restrict Resource location in Azure
+main = rule {
+  length(violatingAzureAppServices["messages"]) is 0
+}
