@@ -1,3 +1,8 @@
+# Policy that checks the 'execution-mode' via the TFC workspace API
+# https://developer.hashicorp.com/terraform/cloud-docs/api-docs/workspaces#show-workspace
+# This policy is written because execution-mode is not currently(Oct 2022) captured in the tfrun mock data
+
+
 ### Import functions ###
 import "tfrun"
 import "http"
