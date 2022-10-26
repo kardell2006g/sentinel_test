@@ -8,6 +8,6 @@ policy "restrict_execution_mode_http" {
 }
 
 policy "restrict_resource_location_azure" {
-  source = "./restrict_resource_location_azure.sentinel"
+  source = "./restrict_resource_location_azure/restrict_resource_location_azure.sentinel"
   enforcement_level = "advisory"
 }
