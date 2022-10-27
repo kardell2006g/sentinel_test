@@ -11,11 +11,11 @@ allowed_locations = ["eastus2","westus1"]
 
 # Function to check if location is in allowed_locations list
 # Warnings will be printed for all violations since the last parameter is true
-violatingAzureAppServices = plan.filter_attribute_is_not_value_ignore_null (resources,
+violatingAzureResources = plan.filter_attribute_is_not_value_ignore_null (resources,
                             "location",allowed_locations, true)
 
 
 # Restrict Resource location in Azure
 main = rule {
-  length(violatingAzureAppServices["messages"]) is 0
+  length(violatingAzureResources["messages"]) is 0
 }
