@@ -1,0 +1,90 @@
+### Import functions ###
+import "tfrun"
+import "http"
+import "json"
+import "time"
+
+### Input Parameters ###
+param total_cost
+param api_key
+param url_path
+
+
+### Run Time Variables from tfrun mock ###
+delta_monthly_cost = float(tfrun.cost_estimate.delta_monthly_cost)
+prior_monthly_cost = float(tfrun.cost_estimate.prior_monthly_cost)
+proposed_monthly_cost = float(tfrun.cost_estimate.proposed_monthly_cost)
+workspace_name = tfrun.workspace.name
+organization = tfrun.organization.name
+speculative = tfrun.speculative
+tf_run_id = tfrun.id
+
+### Other Variables ###
+timestamp = time.now
+
+
+### Build POST Call ###
+request = http.request(url_path)
+request = request.with_header("Authorization", "Bearer "+api_key)
+request = request.with_header("Content-Type", "application/json")
+
+
+print("####################################################")
+print("POLICY RESULTS ARE BELOW")
+print("####################################################\n")
+
+
+### Check the monthly cost from the tfrun to the total_cost parameter ###
+# The POST call is the same for both possibilities, and is only different in terms of passing the SUCCESS or FAIL status
+# This is done so if you choose to only capture the FAILURES you can simply remove/comment out the code section for the true statement
+
+if(proposed_monthly_cost < total_cost){
+	print("POLICY SUCCEEDED: New monthly cost of workspace is within the limits of less than", total_cost)
+	cost = true
+  	status = "Policy Success"
+	
+	if (speculative is false) {
+		### Execute POST call to airtable
+		request = request.with_body(json.marshal({
+		    "records": [{
+			    "fields": {
+				"run_id": tf_run_id,
+				"Recorded Time": timestamp.rfc3339,
+				"Status": status,
+				"Monthly Cost Delta": delta_monthly_cost,
+				"Prior Monthly Cost": prior_monthly_cost,
+				"Proposed Monthly Cost": proposed_monthly_cost,
+				"Workspace Name": workspace_name,
+				"Organization": organization}}]})) ### Important Note: Sentinel requires the ending of json to be fully encapsulated at the last line
+		result = http.post(request)
+		print("Result recorded to external reporting tool")
+	}
+} else {
+  	print("POLICY FAILED: New monthly cost of workspace is beyond the limits of",total_cost, "set forth by the finance team.")
+	cost = false
+	status = "Policy Failed"
+  	
+	if (speculative is false) {
+		### Execute POST call to airtable
+		request = request.with_body(json.marshal({
+		    "records": [{
+			    "fields": {
+				"run_id": tf_run_id,
+				"Recorded Time": timestamp.rfc3339,
+				"Status": status,
+				"Monthly Cost Delta": delta_monthly_cost,
+				"Prior Monthly Cost": prior_monthly_cost,
+				"Proposed Monthly Cost": proposed_monthly_cost,
+				"Workspace Name": workspace_name,
+				"Organization": organization}}]})) ### Important Note: Sentinel requires the ending of json to be fully encapsulated at the last line
+		result = http.post(request)
+		print("Result recorded to external reporting tool")
+	}
+}
+
+print("\n####################################################")
+
+### Policy to check cost guardrails ###
+main = rule {
+  cost is true
+}
